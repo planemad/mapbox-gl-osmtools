@@ -18,7 +18,9 @@ new mapboxgl.OSM(map);
 
 ### Features
 **Under Development**
-- Open map location in OpenStreetMap
+- Open clicked map location in OpenStreetMap for editing
+- View OSM notes on the map
+- Query clicked feature properties from OSM
 
 ### Developing and Testing Mapbox GL JS plugins
 
