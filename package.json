@@ -35,5 +35,9 @@
     "tap-status": "^1.0.1",
     "tape": "^4.4.0",
     "uglify-js": "^2.6.1"
+  },
+  "dependencies": {
+    "util": "^0.10.3",
+    "xhr": "^2.2.0"
   }
 }

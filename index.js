@@ -1,5 +1,55 @@
 'use strict';
+
+var util = require('util');
+var xhr = require('xhr');
+
 /* global mapboxgl */
+
+function OSM(map){
+
+  console.log(util.format('%s:%s', 'foo'));
+
+
+  map.on('click', function(e) {
+
+      // Show popup of feature from an OSM layer
+      var osmFeature = map.queryRenderedFeatures(e.point, {layers:['noturn']})
+
+      if (osmFeature.length) {
+
+        // Check if feature is node or a way
+        var osmType = osmFeature[0].geometry.type == 'LineString' ? 'way' : 'node';
+        var point = osmType == 'way' ? e.lngLat : osmFeature[0].geometry.coordinates ;
+        var popupHTML = "<strong>OpenStreetMap Feature</strong><br>" + osmType + "</b>: <a href='https://www.openstreetmap.org/" + osmType + "/" + osmFeature[0].properties.id + "'>" + osmFeature[0].properties.id + "</a>"
+
+        var popup = new mapboxgl.Popup()
+        .setLngLat(point)
+        .setHTML(popupHTML)
+        .addTo(map);
+      }
+
+      // Ger map coordinates
+      var bounds = map.getBounds();
+      var top = bounds.getNorth();
+      var bottom = bounds.getSouth();
+      var left = bounds.getWest();
+      var right = bounds.getEast();
+
+      //Open in JOSM
+      var josmUrl = 'https://127.0.0.1:8112/load_and_zoom?left='+left+'&right='+right+'&top='+top+'&bottom='+bottom;
+      xhr.get(josmUrl, function() {});
+
+  });
+
+}
+
+function queryOSM(){
+
+  var apiURL = 'http://api06.dev.openstreetmap.org/';
+
+}
+
+
 
 function Compare(a, b) {
   mapboxgl.util.bindHandlers(this);
@@ -96,7 +146,7 @@ Compare.prototype = {
 };
 
 if (window.mapboxgl) {
-  mapboxgl.Compare = Compare;
+  mapboxgl.OSM = OSM;
 } else if (typeof module !== 'undefined') {
-  module.exports = Compare;
+  module.exports = OSM;
 }
