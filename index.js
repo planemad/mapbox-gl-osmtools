@@ -11,9 +11,7 @@ function OSM(map){
   this._map = map;
   // Create new map layers for OSM stuff
 
-  map.on('load', function(e) {
-    // this._createLayers();
-  });
+    this._createLayers().bind(this);
 
   // Create a some UI controls for OSM
   var osmControl = document.createElement('div');
@@ -71,7 +69,9 @@ OSM.prototype = {
 
   // Create interactive layers
   _createLayers: function(){
-    console.log('Adding Layer');
+
+    console.log('Creating Layer');
+
     this._map.on('load', function () {
       // Add a notes layer
       console.log('Adding Layer');
@@ -104,7 +104,7 @@ OSM.prototype = {
     xhr.get(notesXHR, function(err,resp) {
       console.log(resp.body);
       console.log(map);
-      map.getSource('osm-notes-source').setData(resp.body)
+      osm_notes_data.setData(resp.body)
     });
 
   }
