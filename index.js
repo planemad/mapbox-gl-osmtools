@@ -3,13 +3,33 @@
 var util = require('util');
 var xhr = require('xhr');
 
-/* global mapboxgl */
+var osm_notes_data = new mapboxgl.GeoJSONSource();
+
 
 function OSM(map){
 
-  console.log(util.format('%s:%s', 'foo'));
+  this._map = map;
+  // Create new map layers for OSM stuff
+
+  map.on('load', function(e) {
+    // this._createLayers();
+  });
+
+  // Create a some UI controls for OSM
+  var osmControl = document.createElement('div');
+  osmControl.className = 'osm-control';
+
+  var a = document.createElement('a');
+  a.href =  '#';
+  a.className = 'button';
+  a.innerHTML = "OSM Notes";
+  a.addEventListener('mousedown', this._requestNotes.bind(this));
+
+  osmControl.appendChild(a);
+  map.getContainer().appendChild(osmControl);
 
 
+  // Add queries on click
   map.on('click', function(e) {
 
       // Show popup of feature from an OSM layer
@@ -28,7 +48,7 @@ function OSM(map){
         .addTo(map);
       }
 
-      // Ger map coordinates
+      // Get map coordinates
       var bounds = map.getBounds();
       var top = bounds.getNorth();
       var bottom = bounds.getSouth();
@@ -43,108 +63,55 @@ function OSM(map){
 
 }
 
-function queryOSM(){
 
-  var apiURL = 'http://api06.dev.openstreetmap.org/';
+OSM.prototype = {
 
-}
+  // Set OSM variables
+  _apiURL: 'http://api.openstreetmap.org/',
 
+  // Create interactive layers
+  _createLayers: function(){
+    console.log('Adding Layer');
+    this._map.on('load', function () {
+      // Add a notes layer
+      console.log('Adding Layer');
+      this._map.addSource('osm-notes-source', osm_notes_data);
+      this._map.addLayer({
+          "id": "osm-notes",
+          "type": "symbol",
+          "source": "osm-notes-source",
+          "layout": {
+              "icon-image": "rocket-15",
+              }
+          });
+      });
+    },
 
+  // Request OSM Notes
+  _requestNotes: function() {
+    var notesXHR = OSM.prototype._apiURL + 'api/0.6/notes.json?closed=-1&bbox=%s,%s,%s,%s';
+    var map = this._map;
+    var bounds = map.getBounds();
+    var top = bounds.getNorth();
+    var bottom = bounds.getSouth();
+    var left = bounds.getWest();
+    var right = bounds.getEast();
 
-function Compare(a, b) {
-  mapboxgl.util.bindHandlers(this);
+    notesXHR = util.format(notesXHR, left, bottom, right, top);
 
-  var swiper = document.createElement('div');
-  swiper.className = 'compare-swiper';
-  swiper.addEventListener('mousedown', this._onDown);
-  swiper.addEventListener('touchstart', this._onDown);
+    console.log('Requesting Notes')
 
-  this._container = document.createElement('div');
-  this._container.className = 'mapboxgl-compare';
-  this._container.appendChild(swiper);
-
-  a.getContainer().appendChild(this._container);
-
-  this._clippedMap = b;
-  this._bounds = b.getContainer().getBoundingClientRect();
-  this._setPosition(this._bounds.width / 2);
-  this._syncMaps(a, b);
-
-  b.on('resize', function() {
-    this._bounds = b.getContainer().getBoundingClientRect();
-    if (this._x) this._setPosition(this._x);
-  }.bind(this));
-}
-
-Compare.prototype = {
-  _copyPosition: function(a, b) {
-    b.jumpTo({
-      center: a.getCenter(),
-      zoom: a.getZoom(),
-      bearing: a.getBearing(),
-      pitch: a.getPitch()
+    xhr.get(notesXHR, function(err,resp) {
+      console.log(resp.body);
+      console.log(map);
+      map.getSource('osm-notes-source').setData(resp.body)
     });
-  },
 
-  _syncMaps: function(a, b) {
-    var cp = this._copyPosition;
-    function a2b() {
-      b.off('move', b2a);
-      cp(a, b);
-      b.on('move', b2a);
-    }
-
-    function b2a() {
-      a.off('move', b2a);
-      cp(b, a);
-      a.on('move', b2a);
-    }
-
-    a.on('move', a2b);
-    b.on('move', b2a);
-  },
-
-  _onDown: function(e) {
-    if (e.touches) {
-      document.addEventListener('touchmove', this._onMove);
-      document.addEventListener('touchend', this._onTouchEnd);
-    } else {
-      document.addEventListener('mousemove', this._onMove);
-      document.addEventListener('mouseup', this._onMouseUp);
-    }
-  },
-
-  _setPosition: function(x) {
-    var pos = 'translate(' + x + 'px, 0)';
-    this._container.style.transform = pos;
-    this._container.style.WebkitTransform = pos;
-    this._clippedMap.getContainer().style.clip = 'rect(0, 999em, ' + this._bounds.height + 'px,' + x + 'px)';
-    this._x = x;
-  },
-
-  _onMove: function(e) {
-    this._setPosition(this._getX(e));
-  },
-
-  _onMouseUp: function() {
-    document.removeEventListener('mousemove', this._onMove);
-    document.removeEventListener('mouseup', this._onMouseUp);
-  },
-
-  _onTouchEnd: function() {
-    document.removeEventListener('touchmove', this._onMove);
-    document.removeEventListener('touchend', this._onTouchEnd);
-  },
-
-  _getX: function(e) {
-    e = e.touches ? e.touches[0] : e;
-    var x = e.clientX - this._bounds.left;
-    if (x < 0) x = 0;
-    if (x > this._bounds.width) x = this._bounds.width;
-    return x;
   }
+
 };
 
+// Export OSM module
 if (window.mapboxgl) {
   mapboxgl.OSM = OSM;
 } else if (typeof module !== 'undefined') {
