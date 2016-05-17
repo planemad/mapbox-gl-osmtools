@@ -3,6 +3,7 @@
 var util = require('util');
 var xhr = require('xhr');
 
+// Store OSM notes here
 var osm_notes_data = new mapboxgl.GeoJSONSource();
 
 
@@ -11,7 +12,21 @@ function OSM(map){
   this._map = map;
   // Create new map layers for OSM stuff
 
-    this._createLayers().bind(this);
+  console.log('Creating Layer');
+
+  map.on('load', function () {
+    // Add a notes layer
+    console.log('Adding Layer');
+    map.addSource('osm-notes-source', osm_notes_data);
+    map.addLayer({
+        "id": "osm-notes",
+        "type": "symbol",
+        "source": "osm-notes-source",
+        "layout": {
+            "icon-image": "rocket-15",
+            }
+        });
+    });
 
   // Create a some UI controls for OSM
   var osmControl = document.createElement('div');
@@ -67,25 +82,6 @@ OSM.prototype = {
   // Set OSM variables
   _apiURL: 'http://api.openstreetmap.org/',
 
-  // Create interactive layers
-  _createLayers: function(){
-
-    console.log('Creating Layer');
-
-    this._map.on('load', function () {
-      // Add a notes layer
-      console.log('Adding Layer');
-      this._map.addSource('osm-notes-source', osm_notes_data);
-      this._map.addLayer({
-          "id": "osm-notes",
-          "type": "symbol",
-          "source": "osm-notes-source",
-          "layout": {
-              "icon-image": "rocket-15",
-              }
-          });
-      });
-    },
 
   // Request OSM Notes
   _requestNotes: function() {
@@ -102,9 +98,8 @@ OSM.prototype = {
     console.log('Requesting Notes')
 
     xhr.get(notesXHR, function(err,resp) {
-      console.log(resp.body);
-      console.log(map);
-      osm_notes_data.setData(resp.body)
+      console.log(JSON.parse(resp.body));
+      osm_notes_data.setData(JSON.parse(resp.body));
     });
 
   }
