@@ -13,4 +13,4 @@ var map = new mapboxgl.Map({
 });
 
 // Give the map some OSM tools
-new mapboxgl.OSM(map);
+new mapboxgl.OSM(map, "IN");
